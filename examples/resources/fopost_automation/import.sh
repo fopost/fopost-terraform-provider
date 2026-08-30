@@ -1,0 +1,1 @@
+terraform import fopost_automation.blog_to_social atm_01hzy8example
