@@ -1,0 +1,1 @@
+terraform import fopost_label.launch lbl_01hzy8example

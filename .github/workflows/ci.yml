@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt needed on: $unformatted"
+            exit 1
+          fi
+
+      - name: Check the module is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum \
+            || { echo "::error::go.mod or go.sum is out of date; run 'go mod tidy'"; exit 1; }
+
+      - run: go vet ./...
+      - run: go build -v ./...
+      - run: go test -race ./...
+
+  acceptance:
+    name: Acceptance tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest Terraform the provider supports, and the current line.
+        terraform-version: ['1.8.*', '1.14.*']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform-version }}
+          terraform_wrapper: false
+
+      # Every acceptance test runs against an in-process fake FoPost API, so
+      # this never reaches the real service and needs no credentials.
+      - run: go test ./... -v -timeout 15m
+        env:
+          TF_ACC: '1'
+
+  docs:
+    name: Documentation is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.*'
+          terraform_wrapper: false
+
+      - name: Regenerate the registry documentation
+        run: |
+          go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.23.0 generate \
+            --provider-name fopost --rendered-provider-name FoPost
+
+      - name: Fail if docs/ drifted from the schema
+        run: |
+          git diff --compact-summary --exit-code -- docs/ \
+            || { echo "::error::docs/ is stale; run 'make docs' and commit the result"; exit 1; }
