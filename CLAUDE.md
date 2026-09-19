@@ -156,10 +156,8 @@ choice — lowering it means pinning an old plugin-framework release. Let `go mo
 
 ## Parent Dependency
 
-`github.com/fopost/fopost-go` is resolved from the Go module proxy. It has **no `v0.1.0` tag
-yet**, so `go.mod` currently pins the pseudo-version of its `main` tip. Once `fopost-go` tags
-its release, bump this to `v0.1.0` — the pseudo-version is a green-build shim, not the
-intended coordinate.
+`github.com/fopost/fopost-go` is resolved from the Go module proxy. `go.mod` requires the
+tagged `v0.2.0`.
 
 ## Conventions
 
