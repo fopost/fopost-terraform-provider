@@ -3,7 +3,7 @@ module github.com/fopost/terraform-provider-fopost
 go 1.25.8
 
 require (
-	github.com/fopost/fopost-go v0.0.0-20260830090720-12824500947a
+	github.com/fopost/fopost-go v0.2.0
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
